@@ -8,11 +8,46 @@ export default function DashboardPage() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
+  const fetchData = async () => {
+    try {
+      // Agregamos un timestamp para evitar caché agresivo del navegador
+      const res = await fetch(`/api/admin/dashboard?t=${Date.now()}`);
+      const json = await res.json();
+      setData(json);
+    } catch (error) {
+      console.error("Error fetching dashboard data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const clearDatabase = async () => {
+    if (!confirm("¿ESTÁS SEGURO? Esta acción eliminará TODAS las reseñas y notas de forma permanente de Supabase.")) return;
+    
+    setLoading(true);
+    try {
+      const res = await fetch("/api/admin/reviews/clear", { method: "DELETE" });
+      if (res.ok) {
+        alert("Base de datos limpiada correctamente.");
+        fetchData();
+      } else {
+        const err = await res.json();
+        alert("Error: " + err.error);
+      }
+    } catch (error) {
+      alert("Error al conectar con el servidor.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    fetch("/api/admin/dashboard")
-      .then(res => res.json())
-      .then(setData)
-      .finally(() => setLoading(false));
+    fetchData();
+
+    // Sondeo (polling): Actualiza los datos cada 30 segundos automáticamente
+    const interval = setInterval(fetchData, 30000);
+
+    return () => clearInterval(interval);
   }, []);
 
   if (loading) return <div>Cargando dashboard...</div>;
@@ -24,6 +59,12 @@ export default function DashboardPage() {
         <div className="text-[10px] font-bold text-zinc-500 bg-zinc-900 border border-zinc-800 px-2 py-1 rounded">
           LIVE DATA
         </div>
+        <button 
+          onClick={clearDatabase}
+          className="text-[9px] font-black text-rose-500 bg-rose-500/10 border border-rose-500/20 px-3 py-1 rounded-lg hover:bg-rose-500 hover:text-white transition-all uppercase tracking-widest"
+        >
+          Limpiar Todo
+        </button>
       </div>
 
       <div className="grid gap-2 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
@@ -43,7 +84,7 @@ export default function DashboardPage() {
                <div className="h-2 w-2 rounded-full bg-rose-500 animate-ping" />
                <h2 className="text-xs sm:text-sm font-black uppercase text-rose-500 tracking-[0.2em]">Prioridad Crítica</h2>
              </div>
-             <Link href="/admin/reviews?rating=low" className="text-[9px] font-black text-zinc-500 hover:text-white uppercase tracking-widest bg-zinc-900 px-2 py-1 rounded">Ver todas</Link>
+             <Link href="/admin/reviews?rating=low&status=pending" className="text-[9px] font-black text-zinc-500 hover:text-white uppercase tracking-widest bg-zinc-900 px-2 py-1 rounded">Ver todas</Link>
            </div>
            
            <div className="grid gap-3">
@@ -85,7 +126,7 @@ export default function DashboardPage() {
                      <span className="text-xs font-black text-white">{stat.avg.toFixed(1)}★</span>
                      <span className="text-[8px] font-bold text-zinc-600 uppercase tracking-tighter">{stat.total} reviews</span>
                    </div>
-                   <Link href={`/admin/reviews?branch=${stat.branch}&rating=low`} className="h-8 w-8 flex items-center justify-center rounded-lg bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white transition-all">
+                   <Link href={`/admin/reviews?branch=${stat.branch}&rating=low&status=pending`} className="h-8 w-8 flex items-center justify-center rounded-lg bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white transition-all">
                      <span className="text-xs font-black">!</span>
                    </Link>
                 </div>

@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Badge } from "@/components/ui/Badge";
 import { Select } from "@/components/ui/Select";
 import { Input } from "@/components/ui/Input";
 
-export default function ReviewsPage() {
+function ReviewsList() {
   const searchParams = useSearchParams();
   const [reviews, setReviews] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -20,7 +20,8 @@ export default function ReviewsPage() {
 
   const fetchReviews = async () => {
     const params = new URLSearchParams(filters);
-    const res = await fetch(`/api/admin/reviews?${params.toString()}`);
+    // Agregamos t para evitar caché
+    const res = await fetch(`/api/admin/reviews?${params.toString()}&t=${Date.now()}`);
     const data = await res.json();
     setReviews(data.items || []);
     setLoading(false);
@@ -35,13 +36,13 @@ export default function ReviewsPage() {
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
         <h1 className="text-xl font-black tracking-tight text-white uppercase italic">Reseñas</h1>
         <div className="flex bg-zinc-900 border border-zinc-800 p-0.5 rounded-lg w-full sm:w-auto overflow-hidden">
-           {['all', 'pending', 'resolved'].map((s) => (
+           {['all', 'pending', 'in_progress', 'resolved'].map((s) => (
              <button 
                 key={s}
                 onClick={() => setFilters({ ...filters, status: s })}
                 className={`flex-1 sm:flex-none px-3 py-2 sm:py-1 rounded text-[9px] font-black uppercase tracking-widest transition-all ${filters.status === s ? 'bg-zinc-800 text-white' : 'text-zinc-600 hover:text-zinc-400'}`}
              >
-               {s === 'all' ? 'Todas' : s === 'pending' ? 'Pend.' : 'Res.'}
+               {s === 'all' ? 'Todas' : s === 'pending' ? 'Pend.' : s === 'in_progress' ? 'Proc.' : 'Res.'}
              </button>
            ))}
         </div>
@@ -164,5 +165,13 @@ export default function ReviewsPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ReviewsPage() {
+  return (
+    <Suspense fallback={<div className="p-10 text-center font-black text-zinc-800 animate-pulse">CARGANDO...</div>}>
+      <ReviewsList />
+    </Suspense>
   );
 }

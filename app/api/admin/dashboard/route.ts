@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   try {
     const now = new Date();
@@ -36,12 +38,12 @@ export async function GET() {
       };
     });
 
-    // NUEVO: Obtener las 3 reviews críticas más recientes que no han sido resueltas
+    // NUEVO: Obtener las 3 reviews críticas más recientes que están pendientes
     const { data: criticalReviews } = await supabaseAdmin
       .from("reviews")
       .select("*")
       .lte("rating", 2)
-      .neq("status", "resolved")
+      .eq("status", "pending")
       .order("created_at", { ascending: false })
       .limit(3);
 

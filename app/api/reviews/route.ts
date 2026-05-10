@@ -46,8 +46,8 @@ export async function POST(req: NextRequest) {
     if (error) throw error;
 
     const googleUrl = validated.branch === "venecia" 
-      ? process.env.GOOGLE_REVIEW_URL_VENECIA 
-      : process.env.GOOGLE_REVIEW_URL_SANMARCOS;
+      ? "https://search.google.com/local/writereview?placeid=ChIJi0vnrExx14ARCFbYG3xvPqo" 
+      : "https://search.google.com/local/writereview?placeid=ChIJ6zxiklN714ARVQ2BPf3W3Xc";
 
     return NextResponse.json({
       ok: true,
